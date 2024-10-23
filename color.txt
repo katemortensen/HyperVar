@@ -1,0 +1,11 @@
+aquamarine Individual
+khaki1 S02
+thistle S03
+darkseagreen2 S04
+lightskyblue S05
+tan1 S06
+yellowgreen S07
+plum1 S08
+snow3 S09
+orchid4 S10
+tomato MAG

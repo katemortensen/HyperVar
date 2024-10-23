@@ -1,0 +1,11 @@
+# Exclude directories
+/var/www/omics.informatics.indiana.edu/HyperVar/scripts/__pycache__
+/var/www/omics.informatics.indiana.edu/HyperVar/bin
+
+# Exclude files 
+/var/www/omics.informatics.indiana.edu/HyperVar/bin.tar.gz
+/var/www/omics.informatics.indiana.edu/HyperVar/scripts/.RData
+/var/www/omics.informatics.indiana.edu/HyperVar/scripts/.RHistory
+/var/www/omics.informatics.indiana.edu/HyperVar/scripts/.vscode
+/var/www/omics.informatics.indiana.edu/HyperVar/scripts/.vscode/launch.json
+

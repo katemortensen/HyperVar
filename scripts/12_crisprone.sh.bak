@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# Author: Kate Mortensen
+# Last Modified: 2/18/2023
+# Purpose: discover CRISPR artifacts in assemblies using CRISPRone
+
+# setup variables
+. ./00_vars.sh
+
+mkdir -p $CRISPR 
+
+# CRISPRone for individual assemblies
+
+S=$(ls $CURRENT/INDIVIDUALS)
+for SRR in ${S[@]}; do
+
+    FNA="$CURRENT/INDIVIDUALS/$SRR/ASSEMBLY/final_assembly.fasta"
+    ln -s $FNA ${FNA%.fasta}.fa
+
+    $python $CRISPRONE \
+        --outbase $CRISPR/rNA \
+        --outprefix $SRR \
+        --fna ${FNA%.fasta}.fa \
+	--no_tracrRNA True
+
+    unlink ${FNA%.fasta}.fa
+done
+
+# CRISPRone for co-assembly
+
+FNA="$COASSEMBLY/final_assembly.fasta"
+ln -s $FNA ${FNA%.fasta}.fa
+$python $CRISPRONE \
+	--outbase $CRISPR/rNA \
+	--outprefix coassembly \
+	--fna ${FNA%.fasta}.fa \
+	--no_tracrRNA True
+wait
+
+unlink ${FNA%.fasta}.fa
+
+# CRISPRone for reassembled bins
+
+B=$(ls $BIN_ANNOTATION/bin_funct_annotations)
+for BIN in ${B[@]}; do 
+
+    FNA="$BIN_REASSEMBLY/reassembled_bins/${BIN%.gff}.fa"
+    #GFF="$BIN_ANNOTATION/bin_funct_annotations/$BIN"
+    
+    $python $CRISPRONE \
+	--outbase $CRISPR/rNA \
+	--outprefix ${BIN%.gff} \
+	--fna $FNA \
+	--no_tracrRNA True
+wait
+done
+
+wait 
+
+# CRISPRone (for DAS Tool bins)
+
+mkdir -p $DASTOOL_MAGS/commands
+CMD=$DASTOOL_MAGS/commands/crisprone_cmds.txt
+rm -f $CMD
+
+B=$(ls $DASTOOL_MAGS/dastool_out_DASTool_bins)
+for BIN in ${B[@]}; do
+
+    FNA="$DASTOOL_MAGS/dastool_out_DASTool_bins/$BIN"
+
+#    $python $CRISPRONE \
+#        --outbase $CRISPR/rNA \
+#        --outprefix ${BIN%.fa} \
+#        --fna $FNA \
+#        --no_tracrRNA True
+
+    echo "$python $CRISPRONE --outbase $CRISPR/rNA --outprefix ${BIN%.fa} --fna $FNA --no_tracrRNA True" >> $CMD
+
+done
+
+parallel -j $THREADS < $CMD 
+
+# CRISPRone (for MAGScoT bins)
+
+mkdir -p $MAGSCOT_MAGS/commands
+CMD=$MAGSCOT_MAGS/commands/crisprone_cmds.txt
+rm -f $CMD
+
+B=$(ls $MAGSCOT_MAGS/magscot_bins)
+for BIN in ${B[@]}; do
+
+    FNA="$MAGSCOT_MAGS/magscot_bins/$BIN"
+
+#    $python $CRISPRONE \
+#        --outbase $CRISPR/rNA \
+#        --outprefix ${BIN%.fa} \
+#        --fna $FNA \
+#        --no_tracrRNA True
+
+    echo "$python $CRISPRONE --outbase $CRISPR/rNA --outprefix ${BIN%.fa} --fna $FNA --no_tracrRNA True" >> $CMD
+
+done
+
+parallel -j $THREADS < $CMD
+
+# find all assemblies that contain CRISPR artifacts
+
+NOTEMPTY="$CRISPR/rNA_assemblies_with_crispr.txt"
+rm -f $NOTEMPTY
+A=$(ls -d $CRISPR/rNA/*)
+for ASSEMBLY in ${A[@]}; do
+
+    if [ -s $ASSEMBLY/*.crt ]; then
+	echo "${ASSEMBLY##*/}" >> $NOTEMPTY
+    fi
+
+done
+
+wait
+
+
+
